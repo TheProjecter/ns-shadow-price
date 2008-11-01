@@ -1,1 +1,0 @@
-cd documents/uniwork/3rdyear/part2project/simulator
