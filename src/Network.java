@@ -14,7 +14,7 @@ public class Network{
 	public void initialize(){}
 
 	public void run(){
-		while(!terminate() && !(evtQueue.size()==1 && evtQueue.getHead().size()==0)){
+		while(!terminate() || !(evtQueue.size()==1 && evtQueue.getHead().size()==0)){
 			RandomList<NetworkComponent> rl = evtQueue.getHead();
 			while(rl.size()!=0){
 				rl.pick().action();
@@ -27,7 +27,7 @@ public class Network{
 	public void addStat(NetworkData data){stats.newData(data);}
 
 	public boolean terminate(){
-		return time>=100000;
+		return time>=20;
 	}
 
 	public int getTime(){return time;}
@@ -42,11 +42,11 @@ public class Network{
 			UIManager.getSystemLookAndFeelClassName());
 		}catch(Exception e) {}
 
-		int sourceBufferSize = 1;
-		int sourceCapacity = 2;
-		int senderRate = 2;
-		int senderTransferSize = 100;
-		int senderTimeout = 11;
+		int sourceBufferSize = 20;
+		int sourceCapacity = 3;
+		int senderRate = 1;
+		int senderTransferSize = 500;
+		int senderTimeout = 30;
 		int linkDelay = 1;
 
 		System.out.println("Network Simulator...");
@@ -58,7 +58,8 @@ public class Network{
 		ConstantDelayLink link1 = new ConstantDelayLink(net,sender,destination,linkDelay);
 		ConstantDelayLink link2 = new ConstantDelayLink(net,destination,sender,linkDelay);
 
-		net.addEvent(sender);
+		for(int i=1;i<=senderRate;i++)
+			net.addEvent(sender);
 
 		net.run();
 	}
