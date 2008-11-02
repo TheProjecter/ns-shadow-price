@@ -17,6 +17,7 @@ public class TCPSender extends Sender{
 	private int rate;
 	private int transferSize;
 	private int timeout;
+	private int lastSecuredActionTime;
 	private PacketStatus[] ps;
 
 	public TCPSender(Network network, Node destination, int rate, int transferSize, int timeout){
@@ -27,36 +28,44 @@ public class TCPSender extends Sender{
 		setName("NoName");
 		ps = new PacketStatus[transferSize];
 		for(int i=0;i<ps.length;i++) ps[i]=new PacketStatusUnsent();
+		lastSecuredActionTime=0;
 	}
 
 	public void action(){
 		//refresh ps to check for expiry
-		boolean decreaseSpeed = false;
-		for(int i=0; i<ps.length; i++)
-			if (ps[i].isExpired()){
-				ps[i]=new PacketStatusUnsent();
-				decreaseSpeed = true;
+		if(getNetwork().getTime()+1>lastSecuredActionTime){
+			//NO NEED to adjust lastSecuredActionTime yet! see bottom of this method
+			boolean decreaseSpeed = false;
+			for(int i=0; i<ps.length; i++)
+				if (ps[i].isExpired()){
+					ps[i]=new PacketStatusUnsent();
+					decreaseSpeed = true;
+				}
+			if (decreaseSpeed){rate=Math.max(rate/2, 1);}
+			else{
+				rate = rate+1;
 			}
-		if (decreaseSpeed){rate=rate*2;}
-		else{
-			rate = Math.max(1,rate-1);
 		}
-		System.out.println("rate:" + rate);
-
 		// find packet to transmit
 		for(int i=0;i<ps.length;i++){
 			if(ps[i] instanceof PacketStatusUnsent){
 				ps[i] = new PacketStatusPending();
 				transmitPacket(new Packet(this,getDestination(),i));
+				System.out.println("rate:"+rate);
 				break;
 			}
 		}
 
 		//if still packets unsent/pending, put itself in eventqueue for next transmission
-		for(PacketStatus pStatus : ps){
-			if (!(pStatus instanceof PacketStatusSent)){
-				getNetwork().addEvent(this,rate);	//put on queue
-				break;
+		if(getNetwork().getTime()+1>lastSecuredActionTime){
+			lastSecuredActionTime = getNetwork().getTime()+1;
+			int count=0;
+			for(PacketStatus pStatus : ps){
+				if (!(pStatus instanceof PacketStatusSent)){
+					getNetwork().addEvent(this,1);	//put on queue
+					count++;
+					if (count>=rate) break;
+				}
 			}
 		}
 		//stats work...

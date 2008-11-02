@@ -16,15 +16,14 @@ public class Source extends Node{
 
 	public void action(){
 		Packet p = buffer.remove();
-		AckPacket pRe = new AckPacket(this,p.getSender(),p.getSeqNum());
-		transmitPacket(pRe);
+		transmitPacket(new AckPacket(this,p.getSender(),p.getSeqNum()));
 	}
 
 	public void receivePacket(Packet p){
 		if(buffer.size()<bufferSize){	//check if full yet
 			buffer.add(p);
-			lastScheduledActionTime = Math.max(lastScheduledActionTime+capacity,getNetwork().getTime()+capacity);
-			getNetwork().addEvent(this,lastScheduledActionTime-getNetwork().getTime());
+			lastScheduledActionTime = Math.max(lastScheduledActionTime+1,capacity*(getNetwork().getTime()));
+			getNetwork().addEvent(this,lastScheduledActionTime/capacity-getNetwork().getTime());
 			getNetwork().addStat(new NetworkData(p,this,this,getNetwork().getTime()));
 		}
 	}
