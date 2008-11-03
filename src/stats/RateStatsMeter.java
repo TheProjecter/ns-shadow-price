@@ -16,20 +16,12 @@ public class RateStatsMeter extends StatsMeter{
 
 	public RateStatsMeter(){
 		super();
-		setBounds(0,0,WINDOW_WIDTH,WINDOW_HEIGHT);
-		setTitle("Network Simulator");
-		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setVisible(true);
-
 		series = new LinkedList<NetworkData>();
-
-		JDesktopPane jdp = new JDesktopPane();
-		jdp.setBackground(Color.BLACK);
-		JInternalFrame senderRateFrame = new JInternalFrame("Sender Rate",true,false,true,true);
 
 		JPanel chart = new JPanel(){
 			public void paintComponent(Graphics g){
 				//drawgrid
+				super.paintComponent(g);
 				g.setColor(Color.WHITE);
 				g.drawRect(CHART_X,CHART_Y,CHART_WIDTH,CHART_HEIGHT);
 				g.fillRect(CHART_X,CHART_Y+CHART_HEIGHT+1,CHART_WIDTH+3,3);
@@ -49,18 +41,15 @@ public class RateStatsMeter extends StatsMeter{
 
 				//draw lines
 				if(series.size()>1)
-					for(int i=1;i<series.size();i++)
-						g.drawLine(xCoord(i-1),yCoord(series.get(i-1).getTime()),xCoord(i),yCoord(series.get(i).getTime()));
+					for(int i=1;i<series.size();i++) g.drawLine(xCoord(series.get(i-1).getTime()),yCoord(i-1),xCoord(series.get(i).getTime()),yCoord(i));
+						
 			}
 		};
 
-		senderRateFrame.add(chart);
-		senderRateFrame.setBounds(0,0,WINDOW_WIDTH,WINDOW_HEIGHT);
-		senderRateFrame.setVisible(true);
-		jdp.add(senderRateFrame);
-		setContentPane(jdp);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		setSize(600,600);
+		chart.setBackground(Color.BLACK);
+		add(chart);
+		setBounds(0,0,WINDOW_WIDTH,WINDOW_HEIGHT);
+		setVisible(true);
 	}
 
 	public void newData(NetworkData data){
