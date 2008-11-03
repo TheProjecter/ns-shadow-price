@@ -8,16 +8,17 @@ import datastruct.RandomList;
 
 import stats.RateStatsMeter;
 import stats.StatsMeter;
+import stats.GraphChart;
 
 public class Network{
 	private ActionQueue evtQueue;
-	private LinkedList<StatsMeter> stats;
+	private GraphChart chart;
 	int time;
 
 	public Network(){
 		evtQueue = new ActionQueue();
 		time = 0;
-		this.stats = new LinkedList<StatsMeter>();
+		chart = new GraphChart();
 	}
 
 	public void initialize(){}
@@ -33,12 +34,9 @@ public class Network{
 		}
 	}
 	
-	public StatsMeter getStatsMeter(int i){return stats.get(i);}
+	public StatsMeter getStatsMeter(int i){return chart.getStatsMeter(i);}
 	
-	public int addStatsMeter(StatsMeter s){
-		stats.add(s);
-		return stats.size()-1;
-	};
+	public int addStatsMeter(StatsMeter s){return chart.addStatsMeter(s);}
 
 	public boolean terminate(){
 		return time>=20;
@@ -57,18 +55,18 @@ public class Network{
 		}catch(Exception e) {}
 
 		int sourceBufferSize = 10;
-		int sourceCapacity = 5;
-		int senderRate = 4;
+		int sourceCapacity = 2;
+		int senderRate = 2;
 		int senderTransferSize = 500;
-		int senderTimeout = 5;
+		int senderTimeout = 10;
 		int linkDelay = 1;
 
 		System.out.println("Network Simulator...");
 
 		Network net = new Network();
 		Source destination = new Source(net,sourceBufferSize,sourceCapacity);
-		TCPSender sender = new TCPSender(net,destination,senderRate,senderTransferSize,senderTimeout);
-		//ConstantRateSender sender = new ConstantRateSender(net,destination,senderRate,senderTransferSize,senderTimeout);
+		//TCPSender sender = new TCPSender(net,destination,senderRate,senderTransferSize,senderTimeout);
+		ConstantRateSender sender = new ConstantRateSender(net,destination,senderRate,senderTransferSize,senderTimeout);
 		ConstantDelayLink link1 = new ConstantDelayLink(net,sender,destination,linkDelay);
 		ConstantDelayLink link2 = new ConstantDelayLink(net,destination,sender,linkDelay);
 
