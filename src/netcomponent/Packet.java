@@ -1,3 +1,4 @@
+package netcomponent;
 public class Packet{
 	private int mark;
 	private Node sender;

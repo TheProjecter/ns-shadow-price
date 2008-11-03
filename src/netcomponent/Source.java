@@ -1,4 +1,6 @@
+package netcomponent;
 import java.util.LinkedList;
+import stats.*;
 
 public class Source extends Node{
 	private LinkedList<Packet> buffer;
@@ -12,6 +14,8 @@ public class Source extends Node{
 		this.bufferSize=bufferSize;
 		this.capacity=capacity;
 		lastScheduledActionTime=0;
+		statsMeterTicket = getNetwork().addStatsMeter(new RateStatsMeter());
+		getNetwork().getStatsMeter(statsMeterTicket).setTitle(this.toString());
 	}
 
 	public void action(){
@@ -24,7 +28,7 @@ public class Source extends Node{
 			buffer.add(p);
 			lastScheduledActionTime = Math.max(lastScheduledActionTime+1,capacity*(getNetwork().getTime()));
 			getNetwork().addEvent(this,lastScheduledActionTime/capacity-getNetwork().getTime());
-			getNetwork().addStat(new NetworkData(p,this,this,getNetwork().getTime()));
+			getNetwork().getStatsMeter(statsMeterTicket).newData(new NetworkData(p,this,this,getNetwork().getTime()));
 		}
 	}
 

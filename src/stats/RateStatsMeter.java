@@ -1,21 +1,17 @@
+package stats;
+
 import javax.swing.*;
+
+import netcomponent.NetworkData;
+import netcomponent.Sender;
+
+
 import java.awt.Graphics;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.LinkedList;
 
 public class RateStatsMeter extends StatsMeter{
-	private final int MARGIN_X=30;
-	private final int MARGIN_Y=30;
-	private final int WINDOW_WIDTH=800;
-	private final int WINDOW_HEIGHT=600;
-	private final int GRID_SCALE_X=100;
-	private final int GRID_SCALE_Y=100;
-	private final int CHART_X=MARGIN_X;
-	private final int CHART_Y=MARGIN_Y;
-	private final int CHART_WIDTH=WINDOW_WIDTH-2*MARGIN_X;
-	private final int CHART_HEIGHT=WINDOW_HEIGHT-100;
-
 	private LinkedList<NetworkData> series;
 
 	public RateStatsMeter(){
@@ -54,7 +50,7 @@ public class RateStatsMeter extends StatsMeter{
 				//draw lines
 				if(series.size()>1)
 					for(int i=1;i<series.size();i++)
-						g.drawLine(xCoord(series.get(i-1).getTime()),yCoord(i-1),xCoord(series.get(i).getTime()),yCoord(i));
+						g.drawLine(xCoord(i-1),yCoord(series.get(i-1).getTime()),xCoord(i),yCoord(series.get(i).getTime()));
 			}
 		};
 
@@ -69,10 +65,8 @@ public class RateStatsMeter extends StatsMeter{
 
 	public void newData(NetworkData data){
 		System.out.println(data);
-		if (data.getInterDestination() instanceof Sender){
-			series.add(data);
-			repaint();
-		}
+		series.add(data);
+		repaint();
 	}
 
 	public int xCoord(int x){return CHART_X+x;}

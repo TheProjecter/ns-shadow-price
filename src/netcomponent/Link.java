@@ -1,3 +1,4 @@
+package netcomponent;
 public abstract class Link extends NetworkComponent{
 	private Node destination;
 	private Node source;
