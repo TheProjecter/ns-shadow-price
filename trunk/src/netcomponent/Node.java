@@ -1,3 +1,4 @@
+package netcomponent;
 import java.util.LinkedList;
 
 public abstract class Node extends NetworkComponent{

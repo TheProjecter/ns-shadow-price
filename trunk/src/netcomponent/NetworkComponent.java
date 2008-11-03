@@ -1,6 +1,9 @@
+package netcomponent;
 public abstract class NetworkComponent{
 	private Network network;
 	private String name;
+	
+	int statsMeterTicket;
 
 	public NetworkComponent(Network network){
 		this.network=network;

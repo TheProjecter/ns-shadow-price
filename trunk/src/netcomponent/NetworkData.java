@@ -1,3 +1,4 @@
+package netcomponent;
 public class NetworkData{
 	private final NetworkComponent interSource;
 	private final NetworkComponent interDestination;

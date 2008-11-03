@@ -1,3 +1,7 @@
+package netcomponent;
+
+import stats.*;
+
 public class TCPSender extends Sender{
 	//inner classes definitions
 	private abstract class PacketStatus{
@@ -29,6 +33,8 @@ public class TCPSender extends Sender{
 		ps = new PacketStatus[transferSize];
 		for(int i=0;i<ps.length;i++) ps[i]=new PacketStatusUnsent();
 		lastSecuredActionTime=0;
+		statsMeterTicket = getNetwork().addStatsMeter(new RateStatsMeter());
+		getNetwork().getStatsMeter(statsMeterTicket).setTitle(this.toString());
 	}
 
 	public void action(){
@@ -75,7 +81,7 @@ public class TCPSender extends Sender{
 		//check if expired, if ok, packetsent
 		if(ps[p.getSeqNum()] instanceof PacketStatusPending && !(ps[p.getSeqNum()].isExpired())){
 			ps[p.getSeqNum()] = new PacketStatusSent();
-			getNetwork().addStat(new NetworkData(p,this,this,getNetwork().getTime()));
+			getNetwork().getStatsMeter(statsMeterTicket).newData(new NetworkData(p,this,this,getNetwork().getTime()));
 		}
 	}
 

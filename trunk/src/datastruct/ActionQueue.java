@@ -1,4 +1,7 @@
+package datastruct;
 import java.util.LinkedList;
+
+import netcomponent.NetworkComponent;
 
 public class ActionQueue{
 	private LinkedList<RandomList<NetworkComponent>> q;

@@ -1,3 +1,4 @@
+package netcomponent;
 public abstract class Sender extends Node{
 	private Node destination;
 
