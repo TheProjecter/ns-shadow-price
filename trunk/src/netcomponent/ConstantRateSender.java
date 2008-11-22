@@ -31,8 +31,6 @@ public class ConstantRateSender extends Sender{
 		setName("NoName");
 		ps = new PacketStatus[transferSize];
 		for(int i=0;i<ps.length;i++) ps[i]=new PacketStatusUnsent();
-		statsMeterTicket = getNetwork().addStatsMeter(new RateStatsMeter());
-		getNetwork().getStatsMeter(statsMeterTicket).setTitle(this.toString());
 	}
 
 	public void action(){
@@ -57,21 +55,18 @@ public class ConstantRateSender extends Sender{
 				break;
 			}
 		}
-		//stats work...
 	}
 
 	public void receivePacket(Packet p){
 		//check if expired, if ok, packetsent
 		if(ps[p.getSeqNum()] instanceof PacketStatusPending && !(ps[p.getSeqNum()].isExpired())){
 			ps[p.getSeqNum()] = new PacketStatusSent();
-			getNetwork().getStatsMeter(statsMeterTicket).newData(new NetworkData(p,this,this,getNetwork().getTime()));
+			if (cumulPacketsListenerInstalled){
+				getNetwork().getStatsMeter(this, cumulPacketsListenerTix).newData(generateDataEntry(p));
+			}
+			if (markedPacketsListenerInstalled){
+				getNetwork().getStatsMeter(this, markedPacketsListenerTix).newData(generateDataEntry(p));
+			}
 		}
 	}
-
-	public void transmitPacket(Packet p){
-		// no routing table, everything delivered to the same channel...
-		getConnection().receivePacket(p);
-	}
-
-	public Link getConnection(){return getAllConnections().getFirst();}
 }

@@ -1,12 +1,12 @@
 package netcomponent;
+
 public abstract class NetworkComponent{
 	private Network network;
 	private String name;
-	
-	int statsMeterTicket;
 
 	public NetworkComponent(Network network){
 		this.network=network;
+		network.registerNetObj(this);
 	}
 
 	public void setName(String name){this.name=name;}
@@ -20,4 +20,14 @@ public abstract class NetworkComponent{
 	public abstract void receivePacket(Packet p);
 
 	public abstract void transmitPacket(Packet p);
+	
+	public NetworkData generateDataEntry(Packet p, NetworkComponent nextHop){
+		return new NetworkData(p,this,nextHop,getNetwork().getTime());
+	}
+	public NetworkData generateDataEntry(Packet p){
+		return new NetworkData(p,this,this,getNetwork().getTime());
+	}
+	public NetworkData generateDataEntry(Packet p, int aux){
+		return new NetworkData(p,this,this,getNetwork().getTime(),aux);
+	}
 }
