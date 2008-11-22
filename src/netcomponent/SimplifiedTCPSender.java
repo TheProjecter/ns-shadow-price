@@ -2,29 +2,29 @@ package netcomponent;
 
 import stats.*;
 
-public class TCPSender extends Sender{
+public class SimplifiedTCPSender extends Sender{
 	//inner classes definitions
-	private abstract class PacketStatus{
+	abstract class PacketStatus{
 		public boolean isExpired(){return false;}
 	}
-	private class PacketStatusUnsent extends PacketStatus{}
-	private class PacketStatusPending extends PacketStatus{
+	class PacketStatusUnsent extends PacketStatus{}
+	class PacketStatusPending extends PacketStatus{
 		private int creationTime;
 		public PacketStatusPending(){creationTime = getNetwork().getTime();}
 		public boolean isExpired(){
 			return (getNetwork().getTime()>creationTime+timeout);
 		}
 	}
-	private class PacketStatusSent extends PacketStatus{}
+	class PacketStatusSent extends PacketStatus{}
 
 	//variables
-	private int rate;
-	private int transferSize;
-	private int timeout;
-	private int lastSecuredActionTime;
-	private PacketStatus[] ps;
+	int rate;
+	int transferSize;
+	int timeout;
+	int lastSecuredActionTime;
+	PacketStatus[] ps;
 
-	public TCPSender(Network network, Node destination, int rate, int transferSize, int timeout){
+	public SimplifiedTCPSender(Network network, Node destination, int rate, int transferSize, int timeout){
 		super(network, destination);
 		this.rate=rate;
 		this.transferSize=transferSize;
@@ -33,8 +33,6 @@ public class TCPSender extends Sender{
 		ps = new PacketStatus[transferSize];
 		for(int i=0;i<ps.length;i++) ps[i]=new PacketStatusUnsent();
 		lastSecuredActionTime=0;
-		statsMeterTicket = getNetwork().addStatsMeter(new RateStatsMeter());
-		getNetwork().getStatsMeter(statsMeterTicket).setTitle(this.toString());
 	}
 
 	public void action(){
@@ -74,21 +72,18 @@ public class TCPSender extends Sender{
 				}
 			}
 		}
-		//stats work...
 	}
 
 	public void receivePacket(Packet p){
 		//check if expired, if ok, packetsent
 		if(ps[p.getSeqNum()] instanceof PacketStatusPending && !(ps[p.getSeqNum()].isExpired())){
 			ps[p.getSeqNum()] = new PacketStatusSent();
-			getNetwork().getStatsMeter(statsMeterTicket).newData(new NetworkData(p,this,this,getNetwork().getTime()));
+			if (cumulPacketsListenerInstalled){
+				getNetwork().getStatsMeter(this, cumulPacketsListenerTix).newData(generateDataEntry(p));
+			}
+			if (markedPacketsListenerInstalled){
+				getNetwork().getStatsMeter(this, markedPacketsListenerTix).newData(generateDataEntry(p));
+			}
 		}
 	}
-
-	public void transmitPacket(Packet p){
-		// no routing table, everything delivered to the same channel...
-		getConnection().receivePacket(p);
-	}
-
-	public Link getConnection(){return getAllConnections().getFirst();}
 }

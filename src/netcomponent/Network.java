@@ -1,30 +1,38 @@
 package netcomponent;
 
 import javax.swing.*;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.Set;
+import java.util.Iterator;
 
 import datastruct.ActionQueue;
 import datastruct.RandomList;
 
-import stats.RateStatsMeter;
 import stats.StatsMeter;
 import stats.GraphChart;
+import stats.MovementStatsMeter;
 
 public class Network{
 	private ActionQueue evtQueue;
 	private GraphChart chart;
 	int time;
-
+	private Hashtable<NetworkComponent,LinkedList<StatsMeter>> netObjs;
+	private MovementStatsMeter txtOutput;
+	
 	public Network(){
 		evtQueue = new ActionQueue();
 		time = 0;
-		chart = new GraphChart();
+		chart = new GraphChart(this);
+		netObjs = new Hashtable<NetworkComponent,LinkedList<StatsMeter>>();
+		txtOutput = new MovementStatsMeter();
 	}
 
-	public void initialize(){}
-
 	public void run(){
-		while(!terminate() || !(evtQueue.size()==1 && evtQueue.getHead().size()==0)){
+		while(!terminate() && !(evtQueue.size()==1 && evtQueue.getHead().size()==0)){
 			RandomList<NetworkComponent> rl = evtQueue.getHead();
 			while(rl.size()!=0){
 				rl.pick().action();
@@ -34,12 +42,59 @@ public class Network{
 		}
 	}
 	
-	public StatsMeter getStatsMeter(int i){return chart.getStatsMeter(i);}
+	public void registerNetObj(NetworkComponent c){netObjs.put(c,new LinkedList<StatsMeter>());}
 	
-	public int addStatsMeter(StatsMeter s){return chart.addStatsMeter(s);}
+	public void outputTxt(NetworkData d){
+		txtOutput.newData(d);
+	}
+	
+	public StatsMeter getStatsMeter(NetworkComponent c, int tix){
+		return netObjs.get(c).get(tix);
+	}
+	
+	public int addStatsMeter(NetworkComponent c, StatsMeter s){
+		netObjs.get(c).add(s);
+		chart.genStatsDisplay(s);
+		return netObjs.get(c).size()-1;
+	}
+	
+	public void statsIO(){
+		Set<NetworkComponent> keys = netObjs.keySet();
+		Iterator<NetworkComponent> keysIterator = keys.iterator();
+		LinkedList<String> files = new LinkedList<String>();
+		while(keysIterator.hasNext()){
+			NetworkComponent k = keysIterator.next();
+			while(!(netObjs.get(k).isEmpty())){
+				StatsMeter meter = netObjs.get(k).remove();
+				String filename = k.toString() + "-" + meter.getClass().getName() + ".dat";
+				meter.outputStatsTable(filename);
+				files.add(filename);
+			}
+		}
+		try{
+			//output R script file
+			FileWriter fileStream = new FileWriter("result.r",false);
+			BufferedWriter bufferStream = new BufferedWriter(fileStream);
+			
+			for(int i=0; i<files.size();i++){
+				bufferStream.write("x" + i + " <- read.table('" + files.get(i) + "', header=TRUE)");
+				bufferStream.newLine();
+			}
+			bufferStream.write("plot(x0, type='l',main='Simulation Results');");
+			
+			for(int i=1; i<files.size();i++){
+				bufferStream.write("points(x" + i + ",type='l');");
+			}
+			
+			bufferStream.close();
+			System.out.println("Finished IO!");
+		} catch(Exception e){
+			System.out.println(e);
+		}
+	}
 
 	public boolean terminate(){
-		return time>=20;
+		return false;
 	}
 
 	public int getTime(){return time;}
@@ -54,25 +109,43 @@ public class Network{
 			UIManager.getSystemLookAndFeelClassName());
 		}catch(Exception e) {}
 
-		int sourceBufferSize = 10;
-		int sourceCapacity = 2;
-		int senderRate = 2;
+		int sourceBufferSize = 15;
+		int sourceCapacity = 10;
+		int senderRate = 5;
 		int senderTransferSize = 500;
 		int senderTimeout = 10;
 		int linkDelay = 1;
+		int tcpSenderNum = 1;
+		int constantSenderNum = 1;
 
-		System.out.println("Network Simulator...");
+		System.out.println("Network Simulator starts...");
 
 		Network net = new Network();
-		Source destination = new Source(net,sourceBufferSize,sourceCapacity);
-		//TCPSender sender = new TCPSender(net,destination,senderRate,senderTransferSize,senderTimeout);
-		ConstantRateSender sender = new ConstantRateSender(net,destination,senderRate,senderTransferSize,senderTimeout);
-		ConstantDelayLink link1 = new ConstantDelayLink(net,sender,destination,linkDelay);
-		ConstantDelayLink link2 = new ConstantDelayLink(net,destination,sender,linkDelay);
-
-		for(int i=1;i<=senderRate;i++)
-			net.addEvent(sender);
-
+		Resource destination = new ECNResource(net,sourceBufferSize,sourceCapacity);
+		
+		//generate TCP senders
+		for(int i=1;i<=tcpSenderNum;i++){
+			TCPSender sender = new TCPSender(net,destination,senderRate,senderTransferSize,senderTimeout);
+			sender.addMarkedPacketsListener();
+			new ConstantDelayLink(net,sender,destination,linkDelay);
+			new ConstantDelayLink(net,destination,sender,linkDelay);
+			for(int j=1; j<=senderRate; j++){
+				net.addEvent(sender);
+			}
+		}
+		
+		//generate constant rate senders
+		for (int i=1;i<=constantSenderNum;i++){
+			ConstantRateSender sender = new ConstantRateSender(net,destination,senderRate,senderTransferSize,senderTimeout);
+			sender.addMarkedPacketsListener();
+			new ConstantDelayLink(net,sender,destination,linkDelay);
+			new ConstantDelayLink(net,destination,sender,linkDelay);
+			for(int j=1; j<=senderRate; j++){
+				net.addEvent(sender);
+			}
+		}
 		net.run();
+		System.out.println("Network Simulator finishes!");
+		net.statsIO();
 	}
 }

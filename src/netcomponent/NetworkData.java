@@ -7,15 +7,27 @@ public class NetworkData{
 	private final int time;
 	private final int seqNum;
 	private final int mark;
+	private final int aux;
 
 	public NetworkData(Packet p, NetworkComponent interSource, NetworkComponent interDestination, int time){
 		this.interSource=interSource;
 		this.interDestination=interDestination;
-		endSource=p.getSender();
-		endDestination=p.getRecipient();
+		this.endSource=p.getSender();
+		this.endDestination=p.getRecipient();
 		this.time=time;
-		seqNum=p.getSeqNum();
-		mark=p.getMark();
+		this.seqNum=p.getSeqNum();
+		this.mark=p.getMark();
+		this.aux=0;
+	}
+	public NetworkData(Packet p, NetworkComponent interSource, NetworkComponent interDestination, int time, int aux){
+		this.interSource=interSource;
+		this.interDestination=interDestination;
+		this.endSource=p.getSender();
+		this.endDestination=p.getRecipient();
+		this.time=time;
+		this.seqNum=p.getSeqNum();
+		this.mark=p.getMark();
+		this.aux=aux;
 	}
 
 	public NetworkComponent getInterSource(){return interSource;}
@@ -25,6 +37,7 @@ public class NetworkData{
 	public int getTime(){return time;}
 	public int getSeqNum(){return seqNum;}
 	public int getMark(){return mark;}
+	public int getAux(){return aux;}
 	public String toString(){
 		return "Time " + time + " - Packet(sender:" + endSource + ",recipient:" + endDestination + ",seqnum:" + seqNum + ",mark:" + mark + ") moved to " + interDestination + ".";
 	}
