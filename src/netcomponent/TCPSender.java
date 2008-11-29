@@ -1,36 +1,14 @@
 package netcomponent;
 
-public class SimplifiedTCPSender extends Sender{
-	//inner classes definitions
-	abstract class PacketStatus{
-		public boolean isExpired(){return false;}
-	}
-	class PacketStatusUnsent extends PacketStatus{}
-	class PacketStatusPending extends PacketStatus{
-		private int creationTime;
-		public PacketStatusPending(){creationTime = getNetwork().getTime();}
-		public boolean isExpired(){
-			return (getNetwork().getTime()>creationTime+timeout);
-		}
-	}
-	class PacketStatusSent extends PacketStatus{}
-
+public class TCPSender extends SimplifiedTCPSender{
 	//variables
-	int rate;
-	int transferSize;
-	int timeout;
-	int lastSecuredActionTime;
-	PacketStatus[] ps;
+	int accumAck;
+	int thresholdWin;
 
-	public SimplifiedTCPSender(Network network, Node destination, int rate, int transferSize, int timeout){
-		super(network, destination);
-		this.rate=rate;
-		this.transferSize=transferSize;
-		this.timeout=timeout;
-		setName("NoName");
-		ps = new PacketStatus[transferSize];
-		for(int i=0;i<ps.length;i++) ps[i]=new PacketStatusUnsent();
-		lastSecuredActionTime=0;
+	public TCPSender(Network network, Node destination, int rate, int transferSize, int timeout){
+		super(network, destination,rate,transferSize,timeout);
+		this.accumAck=0;
+		this.thresholdWin=0;
 	}
 
 	public void action(){
@@ -38,14 +16,24 @@ public class SimplifiedTCPSender extends Sender{
 		if(getNetwork().getTime()+1>lastSecuredActionTime){
 			//NO NEED to adjust lastSecuredActionTime yet! see bottom of this method
 			boolean decreaseSpeed = false;
-			for(int i=0; i<ps.length; i++)
+			for(int i=0; i<ps.length; i++){
 				if (ps[i].isExpired()){
 					ps[i]=new PacketStatusUnsent();
+					thresholdWin=rate;
 					decreaseSpeed = true;
 				}
+			}
 			if (decreaseSpeed){rate=Math.max(rate/2, 1);}
 			else{
-				rate = rate+1;
+				if(thresholdWin==0 || rate<thresholdWin){
+					//slow start phase
+					rate = rate+accumAck;
+					accumAck=0;
+				} else if (rate>=thresholdWin && accumAck>=rate) {
+					//congestion avoidance
+					rate = rate+1;
+					accumAck=0;
+				}
 			}
 		}
 		// find packet to transmit
@@ -76,6 +64,7 @@ public class SimplifiedTCPSender extends Sender{
 		//check if expired, if ok, packetsent
 		if(ps[p.getSeqNum()] instanceof PacketStatusPending && !(ps[p.getSeqNum()].isExpired())){
 			ps[p.getSeqNum()] = new PacketStatusSent();
+			accumAck++;
 			if (cumulPacketsListenerInstalled){
 				getNetwork().getStatsMeter(this, cumulPacketsListenerTix).newData(generateDataEntry(p));
 			}

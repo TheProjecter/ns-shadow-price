@@ -1,5 +1,8 @@
 package netcomponent;
 
+import java.util.Hashtable;
+import java.util.Iterator;
+
 import stats.CumulPacketsStatsMeter;
 import stats.MarkedPacketsStatsMeter;
 

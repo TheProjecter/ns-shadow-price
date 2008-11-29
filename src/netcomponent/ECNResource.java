@@ -6,7 +6,7 @@ public class ECNResource extends Resource{
 
 	public ECNResource(Network network, int bufferSize, int capacity){
 		super(network, bufferSize, capacity);
-		alphaPercentage = 50;
+		alphaPercentage = 90;
 		alphaBufferSize = 0;
 	}
 	

@@ -109,14 +109,14 @@ public class Network{
 			UIManager.getSystemLookAndFeelClassName());
 		}catch(Exception e) {}
 
-		int sourceBufferSize = 15;
-		int sourceCapacity = 10;
-		int senderRate = 5;
+		int sourceBufferSize = 10000;
+		int sourceCapacity = 1000;
+		int senderRate = 1;
 		int senderTransferSize = 500;
 		int senderTimeout = 10;
 		int linkDelay = 1;
 		int tcpSenderNum = 1;
-		int constantSenderNum = 1;
+		int constantSenderNum = 0;
 
 		System.out.println("Network Simulator starts...");
 
@@ -127,8 +127,9 @@ public class Network{
 		for(int i=1;i<=tcpSenderNum;i++){
 			TCPSender sender = new TCPSender(net,destination,senderRate,senderTransferSize,senderTimeout);
 			sender.addMarkedPacketsListener();
-			new ConstantDelayLink(net,sender,destination,linkDelay);
-			new ConstantDelayLink(net,destination,sender,linkDelay);
+			sender.addRateListener();
+			sender.addCumulPacketsListener();
+			ConstantDelayLink.addfullDuplexLink(net, sender, destination, linkDelay);
 			for(int j=1; j<=senderRate; j++){
 				net.addEvent(sender);
 			}
@@ -146,6 +147,6 @@ public class Network{
 		}
 		net.run();
 		System.out.println("Network Simulator finishes!");
-		net.statsIO();
+		//net.statsIO();
 	}
 }
