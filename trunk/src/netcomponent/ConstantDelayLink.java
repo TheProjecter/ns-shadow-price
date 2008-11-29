@@ -19,4 +19,11 @@ public class ConstantDelayLink extends Link{
 		packetList.add(p);
 		getNetwork().addEvent(this,delay);
 	}
+	
+	public static void addfullDuplexLink(Network network, Node n1, Node n2, int delay){
+		new ConstantDelayLink(network, n1, n2, delay);
+		new ConstantDelayLink(network, n2, n1, delay);
+		n1.announcePresence();
+		n2.announcePresence();
+	}
 }
