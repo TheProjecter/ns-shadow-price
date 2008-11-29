@@ -3,7 +3,7 @@ import java.util.LinkedList;
 import stats.*;
 
 public class Resource extends Node{
-	private LinkedList<Packet> buffer;
+	LinkedList<Packet> buffer;
 	private int bufferSize;
 	private int capacity;
 	private int lastScheduledActionTime;

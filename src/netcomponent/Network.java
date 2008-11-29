@@ -67,6 +67,7 @@ public class Network{
 			while(!(netObjs.get(k).isEmpty())){
 				StatsMeter meter = netObjs.get(k).remove();
 				String filename = k.toString() + "-" + meter.getClass().getName() + ".dat";
+				meter.setYLabel(meter.getYLabel() + "_" + k.getClass().getSimpleName());
 				meter.outputStatsTable(filename);
 				files.add(filename);
 			}
@@ -109,8 +110,8 @@ public class Network{
 			UIManager.getSystemLookAndFeelClassName());
 		}catch(Exception e) {}
 
-		int sourceBufferSize = 10000;
-		int sourceCapacity = 1000;
+		int sourceBufferSize = 100;
+		int sourceCapacity = 10;
 		int senderRate = 1;
 		int senderTransferSize = 500;
 		int senderTimeout = 10;
@@ -121,8 +122,23 @@ public class Network{
 		System.out.println("Network Simulator starts...");
 
 		Network net = new Network();
-		Resource destination = new ECNResource(net,sourceBufferSize,sourceCapacity);
+		Resource destination1 = new ECNResource(net,sourceBufferSize,sourceCapacity);
+		Resource destination2 = new ECNResource(net,sourceBufferSize,sourceCapacity);
+		Router router = new Router(net,sourceBufferSize,sourceCapacity);
+		TCPSender sender1 = new ECN_TCPSender(net,destination1,senderRate,senderTransferSize,senderTimeout);
+		TCPSender sender2 = new TCPSender(net,destination2,senderRate,senderTransferSize,senderTimeout);
+		ConstantDelayLink.addfullDuplexLink(net, sender1, router, linkDelay);
+		ConstantDelayLink.addfullDuplexLink(net, sender2, router, linkDelay);
+		ConstantDelayLink.addfullDuplexLink(net, router, destination1, linkDelay);
+		ConstantDelayLink.addfullDuplexLink(net, router, destination2, linkDelay);
+		for(int j=1; j<=senderRate; j++){
+			net.addEvent(sender1);
+			net.addEvent(sender2);
+		}
+		sender1.addCumulPacketsListener();
+		sender2.addCumulPacketsListener();
 		
+	/*	
 		//generate TCP senders
 		for(int i=1;i<=tcpSenderNum;i++){
 			TCPSender sender = new TCPSender(net,destination,senderRate,senderTransferSize,senderTimeout);
@@ -145,8 +161,9 @@ public class Network{
 				net.addEvent(sender);
 			}
 		}
+	*/
 		net.run();
 		System.out.println("Network Simulator finishes!");
-		//net.statsIO();
+		net.statsIO();
 	}
 }
