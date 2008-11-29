@@ -7,7 +7,7 @@ public class CumulPacketsStatsMeter extends StatsMeter{
 
 	public CumulPacketsStatsMeter(){
 		super();
-		setYLabel("Cumul_Packets");
+		setYLabel("SentPackets");
 	}
 
 	public void newData(NetworkData data){
