@@ -45,7 +45,6 @@ public class ECN_TCPSender extends TCPSender{
 			if(ps[i] instanceof PacketStatusUnsent){
 				ps[i] = new PacketStatusPending();
 				transmitPacket(new Packet(this,getDestination(),i));
-				System.out.println("rate:"+rate);
 				break;
 			}
 		}
