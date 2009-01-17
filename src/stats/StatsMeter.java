@@ -92,7 +92,6 @@ public abstract class StatsMeter extends JInternalFrame{
 				bufferStream.newLine();
 			}
 			bufferStream.close();
-			System.out.println("Finished IO!");
 		} catch(Exception e){
 			System.out.println(e);
 		}

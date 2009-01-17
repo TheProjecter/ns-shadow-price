@@ -1,6 +1,8 @@
 package netcomponent;
 
-public class SimplifiedTCPSender extends Sender{
+import stats.WinSizeStatsMeter;
+
+public class SimplifiedWinBasedSender extends Sender{
 	//inner classes definitions
 	abstract class PacketStatus{
 		public boolean isExpired(){return false;}
@@ -16,58 +18,66 @@ public class SimplifiedTCPSender extends Sender{
 	class PacketStatusSent extends PacketStatus{}
 
 	//variables
-	int rate;
+	int winSize;
 	int transferSize;
 	int timeout;
-	int lastSecuredActionTime;
 	PacketStatus[] ps;
+	int winSizeListenerTix;
+	boolean winSizeListenerInstalled;
 
-	public SimplifiedTCPSender(Network network, Node destination, int rate, int transferSize, int timeout){
+	public SimplifiedWinBasedSender(Network network, Node destination, int transferSize, int timeout){
 		super(network, destination);
-		this.rate=rate;
+		this.winSize=1;
 		this.transferSize=transferSize;
 		this.timeout=timeout;
 		setName("NoName");
 		ps = new PacketStatus[transferSize];
 		for(int i=0;i<ps.length;i++) ps[i]=new PacketStatusUnsent();
-		lastSecuredActionTime=0;
 	}
 
 	public void action(){
 		//refresh ps to check for expiry
-		if(getNetwork().getTime()+1>lastSecuredActionTime){
-			//NO NEED to adjust lastSecuredActionTime yet! see bottom of this method
-			boolean decreaseSpeed = false;
-			for(int i=0; i<ps.length; i++)
-				if (ps[i].isExpired()){
-					ps[i]=new PacketStatusUnsent();
-					decreaseSpeed = true;
-				}
-			if (decreaseSpeed){rate=Math.max(rate/2, 1);}
-			else{
-				rate = rate+1;
+		boolean decreaseSpeed = false;
+		for(int i=0; i<ps.length; i++)
+			if (ps[i].isExpired()){
+				ps[i]=new PacketStatusUnsent();
+				decreaseSpeed = true;
+				break;
+			}
+		if (decreaseSpeed){winSize=Math.max(winSize/2, 1);}
+		else{
+			winSize = winSize+1;
+		}
+		
+		if(winSizeListenerInstalled){
+			getNetwork().getStatsMeter(this, winSizeListenerTix).newData(generateDataEntry(new Packet(this,this,0),winSize));
+		}
+		
+		// see if win space left to transmit
+		int unAck=0;
+		for(int i=0;i<ps.length;i++){
+			if(ps[i] instanceof PacketStatusPending){
+				unAck++;
 			}
 		}
-		// find packet to transmit
-		for(int i=0;i<ps.length;i++){
-			if(ps[i] instanceof PacketStatusUnsent){
-				ps[i] = new PacketStatusPending();
-				transmitPacket(new Packet(this,getDestination(),i));
-				System.out.println("rate:"+rate);
-				break;
+		
+		//if so, find packet to transmit
+		if (unAck<winSize){
+			for(int i=0;i<ps.length;i++){
+				if(ps[i] instanceof PacketStatusUnsent){
+					ps[i] = new PacketStatusPending();
+					transmitPacket(new Packet(this,getDestination(),i));
+					//System.out.println("transmit" + i);
+					break;
+				}
 			}
 		}
 
 		//if still packets unsent/pending, put itself in eventqueue for next transmission
-		if(getNetwork().getTime()+1>lastSecuredActionTime){
-			lastSecuredActionTime = getNetwork().getTime()+1;
-			int count=0;
-			for(PacketStatus pStatus : ps){
-				if (!(pStatus instanceof PacketStatusSent)){
-					getNetwork().addEvent(this,1);	//put on queue
-					count++;
-					if (count>=rate) break;
-				}
+		for(PacketStatus pStatus : ps){
+			if (!(pStatus instanceof PacketStatusSent)){
+				getNetwork().addEvent(this,1);	//put on queue
+				break;
 			}
 		}
 	}
@@ -82,6 +92,13 @@ public class SimplifiedTCPSender extends Sender{
 			if (markedPacketsListenerInstalled){
 				getNetwork().getStatsMeter(this, markedPacketsListenerTix).newData(generateDataEntry(p));
 			}
+		}
+	}
+	
+	public void addWinSizeListener(){
+		if (!winSizeListenerInstalled){
+			winSizeListenerTix = getNetwork().addStatsMeter(this, new WinSizeStatsMeter());
+			winSizeListenerInstalled = true;
 		}
 	}
 }
