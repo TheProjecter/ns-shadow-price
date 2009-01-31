@@ -1,5 +1,7 @@
 package netcomponent;
 
+import netcomponent.SimplifiedTCPSender.PacketStatus;
+import netcomponent.SimplifiedTCPSender.PacketStatusSent;
 import stats.*;
 
 public class ConstantRateSender extends Sender{
@@ -20,6 +22,7 @@ public class ConstantRateSender extends Sender{
 	//variables
 	private int rate;
 	private int transferSize;
+	private int lastSecuredActionTime;
 	private int timeout;
 	private PacketStatus[] ps;
 
@@ -27,6 +30,7 @@ public class ConstantRateSender extends Sender{
 		super(network, destination);
 		this.rate=rate;
 		this.transferSize=transferSize;
+		this.lastSecuredActionTime=0;
 		this.timeout=timeout;
 		setName("NoName");
 		ps = new PacketStatus[transferSize];
@@ -49,10 +53,15 @@ public class ConstantRateSender extends Sender{
 		}
 
 		//if still packets unsent/pending, put itself in eventqueue for next transmission
-		for(PacketStatus pStatus : ps){
-			if (!(pStatus instanceof PacketStatusSent)){
+		if(getNetwork().getTime()+1>lastSecuredActionTime){
+			lastSecuredActionTime = getNetwork().getTime()+1;
+			int count=0;
+			for(PacketStatus pStatus : ps){
+				if (!(pStatus instanceof PacketStatusSent)){
 					getNetwork().addEvent(this,1);	//put on queue
-				break;
+					count++;
+					if (count>=rate) break;
+				}
 			}
 		}
 	}

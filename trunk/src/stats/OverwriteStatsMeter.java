@@ -11,7 +11,7 @@ public abstract class OverwriteStatsMeter extends StatsMeter{
 	}
 	public void newData(NetworkData data){
 		if(!(series.isEmpty()) && data.getTime()==series.getLast().getX()){
-			series.getLast().setY(data.getAux());
+			series.getLast().setY(Math.max(data.getAux(),series.getLast().getY()));
 		}else{
 			series.add(new Tuple<Integer,Integer>(data.getTime(),data.getAux()));
 		}

@@ -79,22 +79,17 @@ public abstract class StatsMeter extends JInternalFrame{
 
 	public abstract void newData(NetworkData data);
 	
+	public Tuple<Integer, Integer> getLatestTuple(){
+		return series.getLast();
+	}
+	public LinkedList<Tuple<Integer,Integer>> getSeries(){
+		return series;
+	}
+	
+	public boolean tupleListEmpty(){return series.isEmpty();}
+	
 	public void outputStatsTable(String filename){
-		try{
-			FileWriter fileStream = new FileWriter(filename,false);
-			BufferedWriter bufferStream = new BufferedWriter(fileStream);
-			
-			bufferStream.write(xLabel + " " + yLabel);
-			bufferStream.newLine();
-			
-			for(int i=0; i<series.size();i++){
-				bufferStream.write(series.get(i).getX() + " " + series.get(i).getY());
-				bufferStream.newLine();
-			}
-			bufferStream.close();
-		} catch(Exception e){
-			System.out.println(e);
-		}
+		IOStatsTable.outputTable(series, filename, xLabel, yLabel);
 	}
 	
 	public int xCoord(int x){return CHART_X+x*zoomX;}
@@ -109,4 +104,5 @@ public abstract class StatsMeter extends JInternalFrame{
 	public void setYLabel(String y){yLabel = y;}
 	public String getRGraphType(){return rGraphType;}
 	public void setRGraphType(String t){rGraphType=t;}
+
 }

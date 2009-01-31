@@ -1,10 +1,8 @@
 package netcomponent;
 
-import java.util.Hashtable;
-import java.util.Iterator;
-
 import stats.CumulPacketsStatsMeter;
 import stats.MarkedPacketsStatsMeter;
+import stats.DropPacketsStatsMeter;
 
 public abstract class Sender extends Node{
 	private Node destination;
@@ -13,6 +11,8 @@ public abstract class Sender extends Node{
 	boolean cumulPacketsListenerInstalled;
 	int markedPacketsListenerTix;
 	boolean markedPacketsListenerInstalled;
+	int dropPacketsListenerTix;
+	boolean dropPacketsListenerInstalled;
 
 	public Sender(Network network, Node destination){
 		super(network);
@@ -31,10 +31,41 @@ public abstract class Sender extends Node{
 		}
 	}
 	
+	public int getCumulPacketsListenerTix(){
+		if (cumulPacketsListenerInstalled){
+			return cumulPacketsListenerTix;
+		} else{
+			return -1;
+		}
+	}
+	
 	public void addMarkedPacketsListener(){
 		if (!markedPacketsListenerInstalled){
 			markedPacketsListenerTix = getNetwork().addStatsMeter(this, new MarkedPacketsStatsMeter());
 			markedPacketsListenerInstalled = true;
+		}
+	}
+	
+	public int getMarkedPacketsListenerTix(){
+		if (markedPacketsListenerInstalled){
+			return markedPacketsListenerTix;
+		} else{
+			return -1;
+		}
+	}
+	
+	public void addDropPacketsListener(){
+		if (!dropPacketsListenerInstalled){
+			dropPacketsListenerTix = getNetwork().addStatsMeter(this, new DropPacketsStatsMeter());
+			dropPacketsListenerInstalled = true;
+		}
+	}
+	
+	public int getDropPacketsListenerTix(){
+		if (dropPacketsListenerInstalled){
+			return dropPacketsListenerTix;
+		} else{
+			return -1;
 		}
 	}
 }
