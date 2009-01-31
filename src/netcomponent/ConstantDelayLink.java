@@ -3,22 +3,16 @@ import java.util.LinkedList;
 
 public class ConstantDelayLink extends Link{
 	private int delay;
-	private LinkedList<Packet> packetList;
 
 	public ConstantDelayLink(Network network, Node source, Node destination, int delay){
 		super(network,source,destination);
 		this.delay=delay;
-		packetList = new LinkedList<Packet>();
 	}
-
-	public void action(){
-		transmitPacket(packetList.remove());
-	}
-
-	public void receivePacket(Packet p){
-		packetList.add(p);
-		getNetwork().addEvent(this,delay);
-	}
+	
+	public int nextDelay(){return delay;}
+	
+	public double getMeanDelay(){return (double)delay;}
+	public double getDelayVariance(){return 0.0;}
 	
 	public static void addfullDuplexLink(Network network, Node n1, Node n2, int delay){
 		new ConstantDelayLink(network, n1, n2, delay);

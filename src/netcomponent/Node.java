@@ -73,4 +73,11 @@ public abstract class Node extends NetworkComponent{
 			rateListenerInstalled = true;
 		}
 	}
+	public int getRateListenerTix(){
+		if (rateListenerInstalled){
+			return rateListenerTix;
+		} else{
+			return -1;
+		}
+	}
 }

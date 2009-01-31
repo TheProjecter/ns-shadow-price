@@ -36,22 +36,10 @@ public class SimplifiedWinBasedSender extends Sender{
 	}
 
 	public void action(){
-		//refresh ps to check for expiry
-		boolean decreaseSpeed = false;
-		for(int i=0; i<ps.length; i++)
-			if (ps[i].isExpired()){
-				ps[i]=new PacketStatusUnsent();
-				decreaseSpeed = true;
-				break;
-			}
-		if (decreaseSpeed){winSize=Math.max(winSize/2, 1);}
-		else{
-			winSize = winSize+1;
-		}
+		//adjust WindowSize
+		if (packetLost()) {reduceWinSize();} else {increaseWinSize();}
 		
-		if(winSizeListenerInstalled){
-			getNetwork().getStatsMeter(this, winSizeListenerTix).newData(generateDataEntry(new Packet(this,this,0),winSize));
-		}
+		if(winSizeListenerInstalled){getNetwork().getStatsMeter(this, winSizeListenerTix).newData(generateDataEntry(new Packet(this,this,0),winSize));}
 		
 		// see if win space left to transmit
 		int unAck=0;
@@ -89,7 +77,7 @@ public class SimplifiedWinBasedSender extends Sender{
 			if (cumulPacketsListenerInstalled){
 				getNetwork().getStatsMeter(this, cumulPacketsListenerTix).newData(generateDataEntry(p));
 			}
-			if (markedPacketsListenerInstalled){
+			if (markedPacketsListenerInstalled && p.getMark()==1){
 				getNetwork().getStatsMeter(this, markedPacketsListenerTix).newData(generateDataEntry(p));
 			}
 		}
@@ -100,5 +88,35 @@ public class SimplifiedWinBasedSender extends Sender{
 			winSizeListenerTix = getNetwork().addStatsMeter(this, new WinSizeStatsMeter());
 			winSizeListenerInstalled = true;
 		}
+	}
+	
+	public int getWinSizeListenerTix(){
+		if (winSizeListenerInstalled){
+			return winSizeListenerTix;
+		} else{
+			return -1;
+		}
+	}
+	
+	boolean packetLost(){
+		//refresh ps to check for expiry
+		boolean decreaseSpeed = false;
+		for(int i=0; i<ps.length; i++){
+			if (ps[i].isExpired()){
+				ps[i]=new PacketStatusUnsent();
+				if(dropPacketsListenerInstalled){
+					getNetwork().getStatsMeter(this, dropPacketsListenerTix).newData(generateDataEntry(new Packet(this,this,0)));
+				}
+				decreaseSpeed = true;
+			}
+		}
+		return decreaseSpeed;
+	}
+	
+	void reduceWinSize(){
+		winSize=Math.max(winSize/2, 1);
+	}
+	void increaseWinSize(){
+		winSize = winSize+1;
 	}
 }

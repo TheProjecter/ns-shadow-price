@@ -8,13 +8,16 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.Iterator;
+import java.util.Random;
 
 import datastruct.ActionQueue;
 import datastruct.RandomList;
+import datastruct.Tuple;
 
 import stats.StatsMeter;
 import stats.GraphChart;
 import stats.MovementStatsMeter;
+import stats.IOStatsTable;
 
 public class Network{
 	private ActionQueue evtQueue;
@@ -66,7 +69,7 @@ public class Network{
 		return netObjs.get(c).size()-1;
 	}
 	
-	public void statsIO(){
+	public void statsIO(String graphType){
 		Set<NetworkComponent> keys = netObjs.keySet();
 		Iterator<NetworkComponent> keysIterator = keys.iterator();
 		LinkedList<String> files = new LinkedList<String>();
@@ -80,25 +83,7 @@ public class Network{
 				files.add(filename);
 			}
 		}
-		try{
-			//output R script file
-			FileWriter fileStream = new FileWriter("result.r",false);
-			BufferedWriter bufferStream = new BufferedWriter(fileStream);
-			
-			for(int i=0; i<files.size();i++){
-				bufferStream.write("x" + i + " <- read.table('" + files.get(i) + "', header=TRUE)");
-				bufferStream.newLine();
-			}
-			bufferStream.write("plot(x0, type='l',main='Simulation Results');");
-			
-			for(int i=1; i<files.size();i++){
-				bufferStream.write("points(x" + i + ",type='l');");
-			}
-			
-			bufferStream.close();
-		} catch(Exception e){
-			System.out.println(e);
-		}
+		IOStatsTable.outputScript(files,graphType);
 	}
 
 	public boolean terminate(){
@@ -116,39 +101,99 @@ public class Network{
 			UIManager.setLookAndFeel(
 			UIManager.getSystemLookAndFeelClassName());
 		}catch(Exception e) {}
-
-		int sourceBufferSize = 10;
-		int sourceCapacity = 3;
+		
+		int sourceBufferSize = 100;
+		int sourceCapacity = 20;
 		int senderRate = 1;
 		int senderTransferSize = 500;
-		int senderTimeout = 100;
-		int linkDelay = 2;
-		int senderNum = 1;
+		int senderTimeout =30;
+		double linkDelay = 15.0;
+		int senderNum = 41;
+		double vqAlpha = 0.5;
+		int utility = 2;
 
-		System.out.println("Network Simulator starts...");
-
-		Network net = new Network();
-		ECNRouterRED router = new ECNRouterRED(net,sourceBufferSize,sourceCapacity);
+		int trials=1;
 		
-		//generate TCP senders
-		for(int i=1;i<=senderNum;i++){
-			Resource destination = new ECNResourceRED(net,sourceBufferSize,sourceCapacity);
-			SimplifiedWinBasedSender sender = new SimplifiedWinBasedSender(net,destination,senderTransferSize,senderTimeout);
-			ConstantDelayLink.addfullDuplexLink(net, sender, router, linkDelay);
-			ConstantDelayLink.addfullDuplexLink(net, router, destination, linkDelay);
-			//sender.addCumulPacketsListener();
-			sender.addWinSizeListener();
-			for(int j=1; j<=senderRate; j++){
-				int interTime = new java.util.Random().nextInt(100);
-				net.addEvent(sender,interTime);
+		LinkedList<LinkedList<Tuple<Double,Double>>> results = new LinkedList<LinkedList<Tuple<Double,Double>>>();
+		results.add(new LinkedList<Tuple<Double,Double>>());
+		
+		for(int i=1; i<=trials;i++){
+			LinkedList<Integer> randomStarts = new LinkedList<Integer>();
+			for(int j=0;j<senderNum;j++){
+				randomStarts.add(new Random().nextInt(1000));
 			}
+			//for(int j=1;j<=senderNum;j++){
+				results.get(0).add(runScript(sourceBufferSize,sourceCapacity,senderRate,senderTransferSize,senderTimeout,linkDelay,senderNum,vqAlpha,utility,randomStarts));
+			//}
 		}
+		/*
+		LinkedList<String> files = new LinkedList<String>();
+		for(int i=0; i<results.size();i++){
+			String filename="markRate";
+			IOStatsTable.outputTable(results.get(i), filename + i + ".dat", "x", "y");
+			files.add(filename + i + ".dat");
+		}
+		IOStatsTable.outputScript(files, "l");
+		*/
+
+	}
+	
+	private static Tuple<Double,Double> runScript(int sourceBufferSize,int sourceCapacity,int senderRate,int senderTransferSize,int senderTimeout,double linkDelay,int senderNum,double vqAlpha,int utility, LinkedList<Integer> randomStarts){
+		System.out.println("Network Simulator starts...");
+		
+		Network net = new Network();
+		ECNRouterVQ router = new ECNRouterVQ(net,sourceBufferSize,sourceCapacity);
+		router.setAlpha(vqAlpha);
+		router.addLoadListener();
+		router.addCongestionListener();
+		router.addAlphaListener();
+		
+		LinkedList<Sender> senders = new LinkedList<Sender>();
+		
+		for(int count=1; count<=senderNum; count++){
+			ECNResourceVQ destination = new ECNResourceVQ(net,sourceBufferSize,100);
+			destination.setAlpha(vqAlpha);
+			if(count==1){
+				senders.add(new ECNWinBasedSenderWTP(net,destination,senderTransferSize*2,senderTimeout,utility));
+			}
+			else if(count==2){
+				senders.add(new ECNWinBasedSenderWTP(net,destination,senderTransferSize,senderTimeout,3));
+			} else{
+				senders.add(new ConstantRateSender(net,destination,1,100,senderTimeout));
+			}
+			PoissonDelayLink.addfullDuplexLink(net, senders.getLast(), router, linkDelay);
+			PoissonDelayLink.addfullDuplexLink(net, router, destination, linkDelay);
+			if (count==1|| count==2) {net.addEvent(senders.getLast(),50);}
+			else{ net.addEvent(senders.getLast(),1000+randomStarts.get(count-1));}
+		}
+		//senders.get(0).addMarkedPacketsListener();
+		//senders.get(1).addMarkedPacketsListener();
+		//((WinBasedSender)(senders.getFirst())).addWinSizeListener();
 
 		long timeStart = System.currentTimeMillis();
 		net.run();
 		long timeEnd = System.currentTimeMillis();
 		long timeTaken = timeEnd-timeStart;
 		System.out.println("Network Simulator finishes in " + timeTaken + "ms!");
-		net.statsIO();
+		
+		int output=0;
+		if(senders.getFirst().dropPacketsListenerInstalled){
+			for(Sender s: senders){
+				if (s.dropPacketsListenerInstalled && !(net.getStatsMeter(s, s.getDropPacketsListenerTix()).getSeries().isEmpty()))
+					output+=net.getStatsMeter(s, s.getDropPacketsListenerTix()).getLatestTuple().getY();
+			}
+		} else if(senders.getFirst().markedPacketsListenerInstalled){
+			for(Sender s: senders){
+				if (s.markedPacketsListenerInstalled && !(net.getStatsMeter(s, s.getMarkedPacketsListenerTix()).getSeries().isEmpty()))
+					output+=net.getStatsMeter(s, s.getMarkedPacketsListenerTix()).getLatestTuple().getY();
+			}
+		} else if(senders.getFirst().cumulPacketsListenerInstalled){
+			for(Sender s: senders){
+				if (s.cumulPacketsListenerInstalled && !(net.getStatsMeter(s, s.getCumulPacketsListenerTix()).getSeries().isEmpty()))
+					output+=net.getStatsMeter(s, s.getCumulPacketsListenerTix()).getLatestTuple().getX();
+			}
+		}
+		net.statsIO("l");
+		return new Tuple<Double,Double>((double)senderNum,(double)output);
 	}
 }
