@@ -10,18 +10,14 @@ public class WinBasedSender extends SimplifiedWinBasedSender{
 		this.threshold=0;
 		this.accumAck=0;
 	}
-
-	public void receivePacket(Packet p){
-		if(ps[p.getSeqNum()] instanceof PacketStatusPending && !(ps[p.getSeqNum()].isExpired())){ accumAck++;}
-		super.receivePacket(p);
-	}
 	
-	void reduceWinSize(){
+	void adjustWinSizeLoss(){
 		threshold=winSize;
 		winSize=Math.max(winSize/2, 1);
 	}
 	
-	void increaseWinSize(){
+	void adjustWinSizeAck(Packet p){
+		accumAck++;
 		if (threshold==0 || winSize<=threshold){
 			//slow start
 			winSize = winSize+accumAck;
