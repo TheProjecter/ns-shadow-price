@@ -41,6 +41,9 @@ public class ECNResourceVQ extends Resource{
 			alphaBufferLoad=Math.max(alphaBufferLoad-((double)(getNetwork().getTime()-lastAlphaBufferClearTime))*alphaPercentage*(double)capacity,0);
 			lastAlphaBufferClearTime = this.getNetwork().getTime();
 		}
+		if(alphaListenerInstalled){
+			getNetwork().getStatsMeter(this, alphaListenerTix).newData(generateDataEntry(new Packet(this,this,0),(int)alphaBufferLoad));
+		}
 		super.transmitPacket(p);
 	}
 	

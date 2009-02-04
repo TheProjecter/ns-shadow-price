@@ -49,6 +49,13 @@ public class Resource extends Node{
 		}
 	}
 	
+	public void transmitPacket(Packet p){
+		if(loadListenerInstalled){
+			getNetwork().getStatsMeter(this, loadListenerTix).newData(generateDataEntry(p,buffer.size()));
+		}
+		super.transmitPacket(p);
+	}
+	
 	public int getBufferSize(){return bufferSize;}
 	
 	public boolean bufferFull(){return (buffer.size()>=bufferSize);}

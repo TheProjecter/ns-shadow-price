@@ -37,8 +37,9 @@ public class SimplifiedWinBasedSender extends Sender{
 
 	public void action(){
 		//adjust WindowSize
-		if (packetLost()) {reduceWinSize();} else {increaseWinSize();}
+		refreshTimeouts();
 		
+		//register winsize if needed
 		if(winSizeListenerInstalled){getNetwork().getStatsMeter(this, winSizeListenerTix).newData(generateDataEntry(new Packet(this,this,0),winSize));}
 		
 		// see if win space left to transmit
@@ -74,6 +75,7 @@ public class SimplifiedWinBasedSender extends Sender{
 		//check if expired, if ok, packetsent
 		if(ps[p.getSeqNum()] instanceof PacketStatusPending && !(ps[p.getSeqNum()].isExpired())){
 			ps[p.getSeqNum()] = new PacketStatusSent();
+			adjustWinSizeAck(p);
 			if (cumulPacketsListenerInstalled){
 				getNetwork().getStatsMeter(this, cumulPacketsListenerTix).newData(generateDataEntry(p));
 			}
@@ -98,25 +100,23 @@ public class SimplifiedWinBasedSender extends Sender{
 		}
 	}
 	
-	boolean packetLost(){
+	void refreshTimeouts(){
 		//refresh ps to check for expiry
-		boolean decreaseSpeed = false;
 		for(int i=0; i<ps.length; i++){
 			if (ps[i].isExpired()){
 				ps[i]=new PacketStatusUnsent();
 				if(dropPacketsListenerInstalled){
 					getNetwork().getStatsMeter(this, dropPacketsListenerTix).newData(generateDataEntry(new Packet(this,this,0)));
 				}
-				decreaseSpeed = true;
+				adjustWinSizeLoss();
 			}
 		}
-		return decreaseSpeed;
 	}
 	
-	void reduceWinSize(){
+	void adjustWinSizeLoss(){
 		winSize=Math.max(winSize/2, 1);
 	}
-	void increaseWinSize(){
+	void adjustWinSizeAck(Packet p){
 		winSize = winSize+1;
 	}
 }
