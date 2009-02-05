@@ -2,7 +2,7 @@ package netcomponent;
 
 import stats.WinSizeStatsMeter;
 
-public class SimplifiedWinBasedSender extends Sender{
+public class Copy_2_of_SimplifiedWinBasedSender extends Sender{
 	//inner classes definitions
 	abstract class PacketStatus{
 		public boolean isExpired(){return false;}
@@ -25,7 +25,7 @@ public class SimplifiedWinBasedSender extends Sender{
 	int winSizeListenerTix;
 	boolean winSizeListenerInstalled;
 
-	public SimplifiedWinBasedSender(Network network, Node destination, int transferSize, int timeout){
+	public Copy_2_of_SimplifiedWinBasedSender(Network network, Node destination, int transferSize, int timeout){
 		super(network, destination);
 		this.winSize=1;
 		this.transferSize=transferSize;
