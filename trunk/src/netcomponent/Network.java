@@ -103,7 +103,7 @@ public class Network{
 		}catch(Exception e) {}
 		
 		int sourceBufferSize = 40;
-		int sourceCapacity = 3;
+		int sourceCapacity = 5;
 		int senderRate = 1;
 		int senderTransferSize = 500;
 		int senderTimeout = 320;
