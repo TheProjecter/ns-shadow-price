@@ -27,13 +27,19 @@ public class Resource extends Node{
 	
 	public void action(){
 		Packet p = buffer.remove();
-		AckPacket ackP = new AckPacket(this,p.getSender(),p.getSeqNum());
-		if (p.getMark()==1){ackP.setMark(1);}
-		transmitPacket(ackP);
+		if(p.getRecipient().equals(this)){
+			//if for me, reply
+			AckPacket ackP = new AckPacket(this,p.getSender(),p.getSeqNum());
+			if (p.getMark()==1){ackP.setMark(1);}
+			transmitPacket(ackP);
+		} else{
+			//otherwise, forward
+			transmitPacket(p);
+		}
 	}
 
 	public void receivePacket(Packet p){
-		if(!bufferFull()){	//check if full yet
+		if(!bufferFull()){	//check if full yet, but assume it is yours
 			buffer.add(p);
 			lastScheduledActionTime = Math.max(lastScheduledActionTime+1,capacity*(1+getNetwork().getTime()));
 			getNetwork().addEvent(this,lastScheduledActionTime/capacity-getNetwork().getTime());
