@@ -7,7 +7,7 @@ import java.util.LinkedList;
 import datastruct.Tuple;
 
 public class IOStatsTable {
-	public static <E,F> void outputTable(LinkedList<Tuple<E,F>> tSeries, String filename, String xLabel, String yLabel){
+	public static <E extends Comparable<E>,F> void outputTable(LinkedList<Tuple<E,F>> tSeries, String filename, String xLabel, String yLabel){
 		try{
 			FileWriter fileStream = new FileWriter(filename,false);
 			BufferedWriter bufferStream = new BufferedWriter(fileStream);

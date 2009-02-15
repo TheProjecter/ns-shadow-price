@@ -9,10 +9,6 @@ public class ECNResourceRED extends Resource{
 		startMarkRandom = bufferSize/3;
 		startMarkAll = 2*bufferSize/3;
 	}
-
-	public void action(){
-		super.action();
-	}
 	
 	public void receivePacket(Packet p){
 		if(buffer.size()>=startMarkAll || (buffer.size()>=startMarkRandom && buffer.size()<startMarkAll && new java.util.Random().nextInt(100)<markProb(buffer.size()))){

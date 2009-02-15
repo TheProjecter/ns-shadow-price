@@ -1,9 +1,5 @@
 package netcomponent;
 
-import netcomponent.SimplifiedTCPSender.PacketStatus;
-import netcomponent.SimplifiedTCPSender.PacketStatusSent;
-import stats.*;
-
 public class ConstantRateSender extends Sender{
 	//inner classes definitions
 	private abstract class PacketStatus{
