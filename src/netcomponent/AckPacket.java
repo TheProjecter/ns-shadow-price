@@ -1,6 +1,8 @@
 package netcomponent;
+
 public class AckPacket extends Packet{
-	AckPacket(Node sender, Node recipient, int seqNum){
-		super(sender,recipient,seqNum);
+	public AckPacket(Packet p){
+		super(p.getRecipient(),p.getSender(),p.getSeqNum());
+		path = p.path;
 	}
 }

@@ -1,5 +1,7 @@
 package netcomponent;
 
+import java.util.Iterator;
+
 import stats.CumulPacketsStatsMeter;
 import stats.MarkedPacketsStatsMeter;
 import stats.DropPacketsStatsMeter;
@@ -23,6 +25,13 @@ public abstract class Sender extends Node{
 	}
 
 	Node getDestination(){return destination;}
+	
+	public void announcePresence(){
+		//need to overwrite this to nothing
+	}
+	public void announcePresenceExcept(Node source){
+		//need to overwrite this to nothing
+	}
 	
 	public void addCumulPacketsListener(){
 		if (!cumulPacketsListenerInstalled){

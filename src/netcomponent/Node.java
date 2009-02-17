@@ -49,15 +49,7 @@ public abstract class Node extends NetworkComponent{
 		}
 		
 		//forward to all except source if something has changed
-		if(updated){
-			Iterator<Node> neighbours = connections.keySet().iterator();
-			while(neighbours.hasNext()){
-				Node n = neighbours.next();
-				if(!(n.equals(source))){
-					n.receiveDistanceVector(this, routingTable);
-				}
-			}
-		}
+		if(updated) announcePresenceExcept(source);
 	}
 
 	public void addConnection(Link l){
@@ -75,13 +67,31 @@ public abstract class Node extends NetworkComponent{
 			neighbours.next().receiveDistanceVector(this, routingTable);
 		}
 	}
+	
+	public void announcePresenceExcept(Node source){
+		Iterator<Node> neighbours = connections.keySet().iterator();
+		while(neighbours.hasNext()){
+			Node n = neighbours.next();
+			if(!(n.equals(source))){
+				n.receiveDistanceVector(this, routingTable);
+			}
+		}
+	}
 
 	Hashtable<Node, Link> getAllConnections(){return connections;};
 
 	public Link removeConnection(int i){return connections.remove(i);}
 	
 	public Link getConnection(Packet p){
-		Link result = routingTable.get(p.getRecipient()).peek().getY();
+		Link result;
+		if(p instanceof AckPacket){
+			result = connections.get(p.extractNode());
+		} else{
+			result = routingTable.get(p.getRecipient()).peek().getY();
+			if(!(result.getDestination().equals(p.getRecipient()))){
+				p.putNode(result.getDestination());
+			}
+		}
 		return result;	//need to check whether result is null.
 	}
 	
