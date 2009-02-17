@@ -11,7 +11,7 @@ public class WinBasedSender extends SimplifiedWinBasedSender{
 		this.accumAck=0;
 	}
 	
-	void adjustWinSizeLoss(){
+	void adjustWinSizeLoss(int lostSeqNum){
 		threshold=winSize;
 		winSize=Math.max(winSize/2, 1);
 	}

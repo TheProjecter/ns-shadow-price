@@ -29,7 +29,7 @@ public class Resource extends Node{
 		Packet p = buffer.remove();
 		if(p.getRecipient().equals(this)){
 			//if for me, reply
-			AckPacket ackP = new AckPacket(this,p.getSender(),p.getSeqNum());
+			AckPacket ackP = new AckPacket(p);
 			if (p.getMark()==1){ackP.setMark(1);}
 			transmitPacket(ackP);
 		} else{

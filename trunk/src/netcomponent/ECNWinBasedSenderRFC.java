@@ -9,7 +9,7 @@ public class ECNWinBasedSenderRFC extends WinBasedSender{
 	
 	void adjustWinSizeAck(Packet p){
 		if (p.getMark()>0){
-			adjustWinSizeLoss();
+			adjustWinSizeLoss(p.getSeqNum());
 		} else{
 			super.adjustWinSizeAck(p);
 		}
