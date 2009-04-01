@@ -2,13 +2,11 @@ package netcomponent;
 
 public class WinBasedSender extends SimplifiedWinBasedSender{
 	//variables
-	int threshold;
-	int accumAck;
+	double threshold;
 
 	public WinBasedSender(Network network, Node destination, int transferSize, int timeout){
 		super(network, destination, transferSize, timeout);
-		this.threshold=0;
-		this.accumAck=0;
+		this.threshold=0.0;
 	}
 	
 	void adjustWinSizeLoss(int lostSeqNum){
@@ -17,18 +15,13 @@ public class WinBasedSender extends SimplifiedWinBasedSender{
 	}
 	
 	void adjustWinSizeAck(Packet p){
-		accumAck++;
-		if (threshold==0 || winSize<=threshold){
+		if (threshold<1.0 || winSize<=threshold){
 			//slow start
-			winSize = winSize+accumAck;
-			accumAck=0;
+			winSize = winSize+1.0;
 		}
 		else{
 			//congestion avoidance
-			if(accumAck==winSize){
-				winSize++;
-				accumAck=0;
-			}
+			winSize=winSize + 1/winSize;
 		}
 	}
 }

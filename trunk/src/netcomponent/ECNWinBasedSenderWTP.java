@@ -16,7 +16,11 @@ public class ECNWinBasedSenderWTP extends WinBasedSender{
 	public void setUtility(int w){utility = w;}
 	public void setGainFactor(int k){gainFactor = k;}
 	
-	void adjustWinSizeLoss(int lostSeqNum){}	//dont do anything
+	void adjustWinSizeLoss(int lostSeqNum){
+		Packet p = new AckPacket(new Packet(this,this,0));
+		p.setMark(1);
+		adjustWinSizeAck(p);
+	}	//dont do anything
 	
 	void adjustWinSizeAck(Packet p){
 		double incAmt = gainLeftover + (double)(((double)gainFactor)*(double)((double)((double)utility/(double)winSize)-(double)(p.getMark())));
