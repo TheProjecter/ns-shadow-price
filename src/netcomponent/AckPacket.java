@@ -5,4 +5,8 @@ public class AckPacket extends Packet{
 		super(p.getRecipient(),p.getSender(),p.getSeqNum());
 		path = p.path;
 	}
+	
+	public void putNode(Node n){
+		//nothing
+	}
 }

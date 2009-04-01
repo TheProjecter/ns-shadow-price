@@ -85,18 +85,17 @@ public abstract class Node extends NetworkComponent{
 	public Link getConnection(Packet p){
 		Link result;
 		if(p instanceof AckPacket){
-			result = connections.get(p.extractNode());
+			Node a = p.extractNode();
+			result = connections.get(a);
 		} else{
 			result = routingTable.get(p.getRecipient()).peek().getY();
-			if(!(result.getDestination().equals(p.getRecipient()))){
-				p.putNode(result.getDestination());
-			}
 		}
 		return result;	//need to check whether result is null.
 	}
 	
 	public void transmitPacket(Packet p){
 		NetworkComponent nextHop = getConnection(p);
+		p.putNode(((Link)nextHop).getDestination());
 		nextHop.receivePacket(p);
 		getNetwork().outputTxt(generateDataEntry(p,nextHop));
 		if(rateListenerInstalled){

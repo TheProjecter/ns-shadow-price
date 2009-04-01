@@ -12,11 +12,11 @@ public class IOStatsTable {
 			FileWriter fileStream = new FileWriter(filename,false);
 			BufferedWriter bufferStream = new BufferedWriter(fileStream);
 			
-			bufferStream.write(xLabel + " " + yLabel);
+			bufferStream.write(xLabel + "\t" + yLabel);
 			bufferStream.newLine();
 			
 			for(int i=0; i<tSeries.size();i++){
-				bufferStream.write(tSeries.get(i).getX() + " " + tSeries.get(i).getY());
+				bufferStream.write(tSeries.get(i).getX() + "\t" + tSeries.get(i).getY());
 				bufferStream.newLine();
 			}
 			bufferStream.close();

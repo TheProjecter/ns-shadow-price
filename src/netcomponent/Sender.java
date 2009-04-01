@@ -1,7 +1,5 @@
 package netcomponent;
 
-import java.util.Iterator;
-
 import stats.CumulPacketsStatsMeter;
 import stats.MarkedPacketsStatsMeter;
 import stats.DropPacketsStatsMeter;

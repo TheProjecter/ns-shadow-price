@@ -65,9 +65,10 @@ public class Network{
 		LinkedList<String> files = new LinkedList<String>();
 		while(keysIterator.hasNext()){
 			NetworkComponent k = keysIterator.next();
+			int index = 0;
 			while(!(netObjs.get(k).isEmpty())){
 				StatsMeter meter = netObjs.get(k).remove();
-				String filename = k.toString() + "-" + meter.getClass().getName() + ".dat";
+				String filename = k.toString() + "-" + meter.getClass().getName() + (index++) +  ".dat";
 				meter.setYLabel(meter.getYLabel() + "_" + k.getClass().getSimpleName());
 				meter.outputStatsTable(filename);
 				files.add(filename);
